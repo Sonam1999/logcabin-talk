@@ -54,9 +54,65 @@
 
 <section data-markdown>
   <script type="text/template">
-    # Usage
+    # Usage overview
 
-    TODO
+    - hierarchical key-value store (tree)
+      - strongly typed
+    - linearizability
+    - conditions
+    - timeouts
+    - working directory
+    - logcabin CLI
+    - client library
+    - client sessions
+      - Implicit state machine command before any others
+      - Used to provide linearizability or crash
+  </script>
+</section>
+
+<section data-markdown>
+  <script type="text/template">
+    # Internals
+
+    - Raft
+      - Leader election
+      - Log replication
+    - Client interaction
+      - Finding cluster
+      - Retries
+      - Read-only queries
+      - Read-write commands (and write pipeline)
+    - Disk
+      - Logs
+      - Snapshots
+    - RPC
+
+  </script>
+</section>
+
+<section data-markdown>
+  <script type="text/template">
+    # Operation
+
+    - Bootstrapping
+    - Changing membership
+    - Upgrades
+    - logcabinctl
+
+  </script>
+</section>
+
+<section data-markdown>
+  <script type="text/template">
+    # Development
+
+    - Code layout
+    - Examples of changes?
+    - Adding a command to logcabinctl?
+    - ServerStats
+    - Development procedure
+    - Testing strategy/tools
+
   </script>
 </section>
 
