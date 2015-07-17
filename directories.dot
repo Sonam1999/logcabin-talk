@@ -28,7 +28,7 @@ TreeOps [label="logcabin\n(TreeOps)"];
 
 // Dependencies
 Client -> RPC;
-Client -> Tree [label="mocking", style="dashed", weight=.5, fontsize=12];
+Client -> Tree [style="dashed", weight=.5];
 Event -> Core;
 Examples -> ClientLib;
 RPC -> Event;

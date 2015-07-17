@@ -35,6 +35,11 @@
 .reveal h6 {
   text-transform: none; /* was uppercase */
 }
+
+.flex {
+  display: flex;
+}
+
     </style>
 
     <!-- Code syntax highlighting -->
@@ -141,9 +146,159 @@
   <img src="auto/directories.svg" class="stretch" />
 </section>
 
-      </div>
-
+<section>
+  <h1>Core/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li>Randomness</li>
+        <li>Time</li>
+        <li>Mutex, condition variable</li>
+        <li>STL and string utilities</li>
+        <li>Checksumming</li>
+        <li>Debug logging</li>
+        <li>Buffer</li>
+        <li>Config file</li>
+      </ul>
     </div>
+  </div>
+</section>
+
+<section>
+  <h1>Event/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li>Event loop (epoll)</li>
+        <li>Singals</li>
+        <li>Timers</li>
+        <li>File descriptors</li>
+        <li>Event::Loop::Lock:
+          <ul style="font-size: .8em">
+            <li>block event loop thread in user-space outside of any handler</li>
+            <li>used when removing monitored files</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>RPC/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li>Low-level framing protocol</li>
+        <li>Application-level connection initiation timeout and heartbeats</li>
+        <li>Higher-level RPC protocol</li>
+        <li>Address: DNS resolution</li>
+        <li>Service: RPC endpoint</li>
+        <li>Thread dispatch for most services</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Protocol/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li>Mostly Protocol Buffer definitions for individual RPC types</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Server/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li>Raft implementation</li>
+        <li>State machine (client sessions, forking)</li>
+        <li>Daemon startup (Globals)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Storage/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li>In-memory and on-disk log</li>
+        <li>Opens/closes snapshot files</li>
+        <li>Filesystem layout</li>
+        <li>Filesystem utilities</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Tree/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li>Core data structure for clients</li>
+        <li>ProtoBuf-to-method call layer</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Client/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li>Implementation of client library</li>
+        <li>LeaderRPC: connect to leader</li>
+        <li>MockClientImpl: in-memory Tree used for testing applications</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h1>Examples/</h1>
+  <div class="flex">
+    <div><img src="auto/directories.svg" /></div>
+    <div style="min-width: 50%; min-height: 100000px">
+      <!-- giant min-height forces title to top of screen -->
+      <ul>
+        <li><code>logcabin-reconfigure</code></li>
+        <li><code>logcabin</code> CLI tool</li>
+        <li>Hello world</li>
+        <li>Benchmark</li>
+      </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+      </div> <!-- slides -->
+
+    </div> <!-- reveal -->
 
     <script src="reveal.js/lib/js/head.min.js"></script>
     <script src="reveal.js/js/reveal.js"></script>
@@ -155,6 +310,15 @@
       Reveal.initialize({
         // Push each slide change to the browser history
         history: true,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1024,
+        height: 768,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.03,
 
         dependencies: [
           // Interpret Markdown in <section> elements
