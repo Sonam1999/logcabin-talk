@@ -40,6 +40,10 @@
   display: flex;
 }
 
+pre.small{
+  font-size: .4em;
+}
+
     </style>
 
     <!-- Code syntax highlighting -->
@@ -127,6 +131,343 @@
   </script>
 </section>
 
+<section>
+  <section>
+    <h1>Bootstrapping (1)</h1>
+    <p>Bootstrap initializes the very first server's log with a configuration entry made up of just itself.</p>
+    <pre>
+<b>Server1$ cat logcabin.conf</b>
+serverId = 1
+listenAddresses = 192.168.5.12
+storagePath = storage
+    </pre>
+    <pre>
+<b>Server1$ logcabind --config=logcabin.conf --bootstrap</b>
+...
+Server/RaftConsensus.cc:572 in setConfiguration(): Activating configuration 1:
+prev_configuration {
+  servers {
+    server_id: 1
+    addresses: "192.168.5.12"
+  }
+}
+
+Server/Main.cc:346 in main(): Done bootstrapping configuration. Exiting.
+...
+    </pre>
+  </section>
+
+  <section>
+    <h1>Bootstrapping (2)</h1>
+    <p>The directory structure shows a single log segment with a single entry, and no snapshot.</p>
+    <pre>
+<b>Server1$ tree -sh --du -F storage</b>
+storage
+└── [ 16K]  server1/
+    ├── [   0]  lock
+    ├── [8.1K]  log/
+    │   └── [4.1K]  Segmented-Binary/
+    │       ├── [  51]  00000000000000000001-00000000000000000001
+    │       ├── [  35]  metadata1
+    │       └── [  35]  metadata2
+    └── [4.0K]  snapshot/
+    </pre>
+  </section>
+
+  <section>
+    <h1>Bootstrapping (3)</h1>
+    <p><code>logcabin-storage</code> dumps out the log.</p>
+    <pre class="small">
+<b>Server1$ logcabin-storage --config=logcabin.conf</b>
+...
+Storage/Tool.cc:255 in main(): Log contents start
+Log:
+metadata start: 
+current_term: 1
+voted_for: 0
+end of metadata
+startIndex: 1
+
+Entry 1 start:
+term: 1
+type: CONFIGURATION
+configuration {
+  prev_configuration {
+    servers {
+      server_id: 1
+      addresses: "192.168.5.12"
+    }
+  }
+}
+index: 1
+cluster_time: 0
+end of entry 1
+Storage/Tool.cc:257 in main(): Log contents end
+...
+Storage/Tool.cc:260 in main(): Reading snapshot at storage/server1
+Storage/Tool.cc:153 in readSnapshot(): Snapshot file not found in storage/server1/snapshot
+    </pre>
+  </section>
+</section>
+
+<section>
+  <section>
+    <h1>Adding cluster members (1)</h1>
+    <p>First, let's start up the servers.</p>
+     <pre>
+<b>Server2$ cat logcabin.conf</b>
+serverId = 2
+listenAddresses = 192.168.5.13
+storagePath = storage
+    </pre>
+     <pre>
+<b>Server3$ cat logcabin.conf</b>
+serverId = 3
+listenAddresses = 192.168.5.14
+storagePath = storage
+    </pre>
+    <pre>
+<b>Server1$ logcabind --config=logcabin.conf --daemon --log=server1.log</b>
+<b>Server2$ logcabind --config=logcabin.conf --daemon --log=server2.log</b>
+<b>Server3$ logcabind --config=logcabin.conf --daemon --log=server3.log</b>
+    </pre>
+  </section>
+
+  <section>
+    <h1>Adding cluster members (2)</h1>
+    <p>The first server gets to become leader of itself.</p>
+    <pre class="small">
+<b>$ logcabinctl --server=$SERVER1IP stats get</b>
+...
+server_id: 1
+addresses: "192.168.5.12"
+...
+raft {
+  current_term: 2
+  <b>state: LEADER</b>
+  commit_index: 6
+  last_log_index: 6
+  leader_id: 1
+  voted_for: 1
+  ...
+  last_snapshot_index: 0
+  last_snapshot_bytes: 0
+  log_start_index: 1
+  log_bytes: 679
+  ...
+  peer {
+    server_id: 1
+    addresses: "192.168.5.12"
+    old_member: true
+    new_member: false
+    staging_member: false
+    last_synced_index: 6
+  }
+}
+...
+    </pre>
+  </section>
+
+  <section>
+    <h1>Adding cluster members (3)</h1>
+     <p>Other servers just sit idle, since they don't have a configuration.</p>
+    <pre class="small">
+<b>$ logcabinctl --server=$SERVER2IP stats get</b>
+...
+server_id: 2
+addresses: "192.168.5.13"
+...
+raft {
+  current_term: 0
+  <b>state: FOLLOWER</b>
+  commit_index: 0
+  last_log_index: 0
+  <b>leader_id: 0</b>
+  voted_for: 0
+  ...
+  last_snapshot_index: 0
+  last_snapshot_bytes: 0
+  log_start_index: 1
+  log_bytes: 1
+  ...
+  peer {
+    server_id: 2
+    addresses: ""
+    old_member: false
+    new_member: false
+    staging_member: false
+  }
+}
+...
+    </pre>
+  </section>
+
+  <section>
+    <h1>Adding cluster members (4)</h1>
+     <p>We can ask the leader to add the other two.</p>
+    <pre>
+<b>$ export CLUSTER=$SERVER1IP,$SERVER2IP,$SERVER3IP</b>
+<b>$ logcabin-reconfigure --cluster=$CLUSTER set $SERVER1IP $SERVER2IP $SERVER3IP</b>
+Current configuration:
+Configuration 1:
+- 1: 192.168.5.12
+
+Attempting to change cluster membership to the following:
+1: 192.168.5.12 (given as 192.168.5.12)
+2: 192.168.5.13 (given as 192.168.5.13)
+3: 192.168.5.14 (given as 192.168.5.14)
+
+Membership change result: OK
+
+Current configuration:
+Configuration 11:
+- 1: 192.168.5.12
+- 2: 192.168.5.13
+- 3: 192.168.5.14
+    </pre>
+  </section>
+
+  <section>
+    <h1>Adding cluster members (5)</h1>
+     <p>Now servers 2 and 3 are part of the cluster, have the latest configuration, and are proper followers.</p>
+    <pre class="small">
+<b>$ logcabinctl --server=$SERVER2IP stats get</b>
+...
+raft {
+  current_term: 17
+  state: FOLLOWER
+  commit_index: 1045
+  last_log_index: 1045
+  leader_id: 1
+  voted_for: 0
+  ...
+  peer {
+    server_id: 1
+    addresses: "192.168.5.12"
+    old_member: true
+    new_member: false
+    staging_member: false
+  }
+  peer {
+    server_id: 2
+    addresses: "192.168.5.13"
+    old_member: true
+    new_member: false
+    staging_member: false
+  }
+  peer {
+    server_id: 3
+    addresses: "192.168.5.14"
+    old_member: true
+    new_member: false
+    staging_member: false
+  }
+}
+    </pre>
+  </section>
+</section>
+
+<section>
+  <section>
+    <h1>Joint Consensus (1)</h1>
+    <p>LogCabin uses the <em>joint consensus</em> approach to Raft membership changes.</p>
+    <ul>
+      <li>Older form of membership changes, prior to single-server approach (see dissertation).</li>
+      <li>Allows transitioning from one cluster to another arbitrarily (no need for overlap).</li>
+      <li>Cluster remains available throughout.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h1>Joint Consensus (2)</h1>
+    Procedure:
+    <ol>
+      <li>Leader catches up new servers with the latest snapshot and (most) log entries.</li>
+      <li>Leader appends a transitional configuration entry to its log. Under this configuration, becoming leader and committing entries requires both:</li>
+        <ul>
+          <li>a majority of the old configuration, and</li>
+          <li>a majority of the new configuration.</li>
+        </ul>
+      </li>
+      <li>Leader commits transitional configuration entry.</li>
+      <li>Leader appends new configuration entry to its log.</li>
+      <li>Leader commits new configuration entry.</li>
+
+  </section>
+  <section>
+    <h1>Joint Consensus (3)</h1>
+    <p>Log from adding servers after bootstrapping</p>
+    <pre class="small">
+<b>Server1$ cat server1.log</b>
+...
+Server/RaftConsensus.cc:1595 in setConfiguration(): Attempting to change the configuration from 1
+Server/RaftConsensus.cc:1603 in setConfiguration(): Adding server 1 at 192.168.5.12 to staging servers
+Server/RaftConsensus.cc:1603 in setConfiguration(): Adding server 2 at 192.168.5.13 to staging servers
+Server/RaftConsensus.cc:1603 in setConfiguration(): Adding server 3 at 192.168.5.14 to staging servers
+...
+Server/RaftConsensus.cc:1625 in setConfiguration(): Done catching up servers
+Server/RaftConsensus.cc:1650 in setConfiguration(): Writing transitional configuration entry
+...
+Server/RaftConsensus.cc:572 in setConfiguration(): Activating configuration 10:
+prev_configuration {
+  servers { server_id: 1, addresses: "192.168.5.12" }
+}
+next_configuration {
+  servers { server_id: 1, addresses: "192.168.5.12" },
+  servers { server_id: 2, addresses: "192.168.5.13" },
+  servers { server_id: 3, addresses: "192.168.5.14" }
+}
+Server/RaftConsensus.cc:572 in setConfiguration(): Activating configuration 11:
+prev_configuration {
+  servers { server_id: 1, addresses: "192.168.5.12" },
+  servers { server_id: 2, addresses: "192.168.5.13" },
+  servers { server_id: 3, addresses: "192.168.5.14" }
+}
+...
+    </pre>
+  </section>
+
+  <section>
+    <h1>Joint Consensus (4)</h1>
+    <p>Arbitrary cluster changes</p>
+    <pre class="small">
+<b>$ logcabin-reconfigure --cluster=$CLUSTER set $SERVER1IP</b>
+Current configuration:
+Configuration 11:
+- 1: 192.168.5.12
+- 2: 192.168.5.13
+- 3: 192.168.5.14
+
+Attempting to change cluster membership to the following:
+1: 192.168.5.12 (given as 192.168.5.12)
+
+Membership change result: OK
+
+Current configuration:
+Configuration 2357:
+- 1: 192.168.5.12
+
+<b>$ logcabin-reconfigure --cluster=$CLUSTER set $SERVER2IP $SERVER3IP</b>
+Current configuration:
+Configuration 2357:
+- 1: 192.168.5.12
+
+Attempting to change cluster membership to the following:
+2: 192.168.5.13 (given as 192.168.5.13)
+3: 192.168.5.14 (given as 192.168.5.14)
+
+<b>[...wait for leader election...]</b>
+Membership change result: OK
+
+Current configuration:
+Configuration 2378:
+- 2: 192.168.5.13
+- 3: 192.168.5.14
+    </pre>
+  </section>
+
+</section>
+
 <section data-markdown>
   <script type="text/template">
     # Development
@@ -142,7 +483,7 @@
 </section>
 
 <section>
-  <h1>Directory Structure</h1>
+  <h1>Code Walkthrough</h1>
   <img src="auto/directories.svg" class="stretch" />
 </section>
 
