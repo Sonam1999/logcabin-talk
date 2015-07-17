@@ -6,7 +6,7 @@ fontname="Mono";
 // Directories
 // LOC are "total" and "SLOC for non-test files" according to
 // logcabin/scripts/loc.sh, last updated 2015-07-17
-node [shape="ellipse", style="filled", fillcolor="#fdae61"];
+node [shape="ellipse", style="filled", fillcolor="#fdae61", fontsize=20];
 Client [label="Client/\n3-6K LOC"];
 Core [label="Core/\n3-7K LOC"];
 Event [label="Event/\n1-2K LOC"];
@@ -48,4 +48,4 @@ ServerControl -> Client;
 StorageTool -> Storage;
 TreeOps -> Examples;
 
-}
+} // must be last line in file for Makefile
