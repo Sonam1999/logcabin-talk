@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
 
-    <title>LogCabin - Usage, Operation, and Internals</title>
+    <title>LogCabin - usage, operation, and internals</title>
 
     <meta name="description" content="A framework for easily creating beautiful presentations using HTML">
     <meta name="author" content="Hakim El Hattab">
@@ -72,7 +72,7 @@ pre.small{
 
 <section>
   <h1>LogCabin</h1>
-  <h3>Usage, Operation, and Internals</h3>
+  <h3>usage, operation, and internals</h3>
   <p>
     <small>
       Created by <a href="https://ongardie.net/diego/">Diego Ongaro</a> /
@@ -369,7 +369,7 @@ raft {
 
 <section>
   <section>
-    <h1>Joint Consensus (1)</h1>
+    <h1>Joint consensus (1)</h1>
     <p>LogCabin uses the <em>joint consensus</em> approach to Raft membership changes.</p>
     <ul>
       <li>Older form of membership changes, prior to single-server approach (see dissertation).</li>
@@ -379,7 +379,7 @@ raft {
   </section>
 
   <section>
-    <h1>Joint Consensus (2)</h1>
+    <h1>Joint consensus (2)</h1>
     Procedure:
     <ol>
       <li>Leader catches up new servers with the latest snapshot and (most) log entries.</li>
@@ -395,7 +395,7 @@ raft {
 
   </section>
   <section>
-    <h1>Joint Consensus (3)</h1>
+    <h1>Joint consensus (3)</h1>
     <p>Log from adding servers after bootstrapping</p>
     <pre class="small">
 <b>Server1$ cat server1.log</b>
@@ -428,7 +428,7 @@ prev_configuration {
   </section>
 
   <section>
-    <h1>Joint Consensus (4)</h1>
+    <h1>Joint consensus (4)</h1>
     <p>Arbitrary cluster changes</p>
     <pre class="small">
 <b>$ logcabin-reconfigure --cluster=$CLUSTER set $SERVER1IP</b>
@@ -501,7 +501,7 @@ Commands:
   </section>
 
   <section>
-    <h1>Forcing a Snapshot</h1>
+    <h1>Forcing a snapshot</h1>
     <pre>
 <b>$ logcabinctl --server=$SERVER1IP stats get | grep bytes</b>
   last_snapshot_bytes: 0
@@ -521,7 +521,7 @@ Commands:
   </section>
 
   <section>
-    <h1>Inhibiting Snapshots</h1>
+    <h1>Inhibiting snapshots</h1>
     <p><code>scqad</code> prevents automatic snapshots for one week after a test failure.</p>
     <pre>
 <b>$ logcabinctl --server=$SERVER1IP snapshot inhibit set 1week</b>
@@ -539,7 +539,7 @@ Commands:
   </section>
 
   <section>
-    <h1>Changing Debug Log Verbosity</h1>
+    <h1>Changing debug log verbosity</h1>
     <p>Change the server's verbosity at runtime</p>
     <pre>
 <b>$ logcabinctl --server=$SERVER1IP debug policy get</b>
@@ -579,7 +579,7 @@ LogCabin::Client::Debug::setLogPolicy(
 
 <section>
   <section>
-    <h1>Code Walkthrough</h1>
+    <h1>Code walkthrough</h1>
     <img src="auto/directories.svg" class="stretch" />
   </section>
 
