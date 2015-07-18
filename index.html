@@ -392,8 +392,8 @@ raft {
       <li>Leader commits transitional configuration entry.</li>
       <li>Leader appends new configuration entry to its log.</li>
       <li>Leader commits new configuration entry.</li>
-
   </section>
+
   <section>
     <h1>Joint consensus (3)</h1>
     <p>Log from adding servers after bootstrapping</p>
@@ -728,11 +728,89 @@ LogCabin::Client::Debug::setLogPolicy(
           <li>Hello world</li>
           <li>Benchmark</li>
         </ul>
-        </div>
       </div>
     </div>
   </section>
 </section>
+
+<section>
+  <section data-markdown>
+    <script type="text/template">
+# SegmentedStorage
+
+Goals:
+  - Easy to deploy: run on top of filesystem
+  - Safe: fsync/fdatasync
+  - Efficient:
+    - About 1 disk write for each batch of entries
+    - Allow leader to queue disk writes to a background thread
+
+Operations:
+  - Read log entry (common for newer entries)
+  - Append batch of log entries (common)
+  - Truncate suffix of log (rare, must be exact)
+  - Truncate prefix of log (rare, only needs to reclaim most space)
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# SegmentedStorage internals
+
+TODO: The contents of the next slide would be well-suited by a diagram.
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# SegmentedStorage internals
+- *Segment*: about 8MB file where consecutive log entries are written
+- About 3 *open segments* at any given time
+  - Pre-allocated by a background thread
+  - New log entries appended to *head segment*
+  - Other open segments are full of zeros
+  - Named *open-1*, *open-2*, ...
+- Any number of *closed segments*
+  - Named after log index range (*001-005*, *006-009*, ...)
+  - Immutable
+  - Any remaining zero bytes have been truncated
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# SegmentedStorage recovery (boot)
+
+- Read metadata files (there are exactly two)
+  - Use latest one with valid checksum
+- For a closed segment:
+  - Read all entries specified in filename
+  - PANIC if checksum failure or entries missing
+- For an open segment:
+  - Read one entry at a time until checksum failure or EOF
+  - If rest of file isn't all 0s, issue warning and continue
+    - Probably crashed while writing an un-ack-ed entry
+    - Or maybe an ack-ed entry was corrupted (Byzantine)
+  - Close the segment: truncate the end of the file, rename it
+- PANIC if gap or duplicate in log indexes
+- Does not detect missing entries at end of log (Byzantine)
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# SegmentedStorage wishlist
+
+- Truncate suffix could just append a special marker and not use <code>ftruncate</code>
+  - Not a localized change
+  - No evidence of a problem with <code>ftruncate</code> at this point
+- Should not store all log entries in memory ([#106](https://github.com/logcabin/logcabin/issues/106))
+  - Probably pretty easy with mmap
+    </script>
+  </section>
+
+</section>
+
 
       </div> <!-- slides -->
 
