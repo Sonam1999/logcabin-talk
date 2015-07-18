@@ -468,6 +468,101 @@ Configuration 2378:
 
 </section>
 
+<section>
+  <section>
+    <h1>logcabinctl</h1>
+    <pre>
+<b>$ logcabinctl --help</b>
+Inspect or modify the state of a single LogCabin server.
+...
+Commands:
+  info get                     Print server ID and addresses.
+  debug filename get           Print the server's debug log filename.
+  debug filename set &lt;path&gt;    Change the server's debug log filename.
+  debug policy get             Print the server's debug log policy.
+  debug policy set &lt;value&gt;     Change the server's debug log policy.
+  debug rotate                 Rotate the server's debug log file.
+  snapshot inhibit get         Print the remaining time for which the server
+                               was prevented from taking snapshots.
+  snapshot inhibit set [&lt;time&gt;]  Abort the server's current snapshot if one is
+                                 in progress, and disallow the server from
+                                 starting automated snapshots for the given
+                                 duration [default: 1week].
+  snapshot inhibit clear       Allow the server to take snapshots normally.
+  snapshot start               Begin taking a snapshot if none is in progress.
+  snapshot stop                Abort the current snapshot if one is in
+                               progress.
+  snapshot restart             Abort the current snapshot if one is in
+                               progress, then begin taking a new snapshot.
+  stats get                    Print detailed server metrics.
+  stats dump                   Write detailed server metrics to server's debug
+                               log.
+    </pre>
+  </section>
+
+  <section>
+    <h1>Forcing a Snapshot</h1>
+    <pre>
+<b>$ logcabinctl --server=$SERVER1IP stats get | grep bytes</b>
+  last_snapshot_bytes: 0
+  log_bytes: 744921
+  open_segment_bytes: 744867
+    </pre>
+    <pre>
+<b>$ logcabinctl --server=$SERVER1IP snapshot start</b>
+    </pre>
+...wait a second...
+    <pre>
+<b>$ logcabinctl --server=$SERVER1IP stats get | grep bytes</b>
+  last_snapshot_bytes: 2785
+  log_bytes: 1863
+  open_segment_bytes: 1863
+    </pre>
+  </section>
+
+  <section>
+    <h1>Inhibiting Snapshots</h1>
+    <p><code>scqad</code> prevents automatic snapshots for one week after a test failure.</p>
+    <pre>
+<b>$ logcabinctl --server=$SERVER1IP snapshot inhibit set 1week</b>
+<b>$ logcabinctl --server=$SERVER1IP snapshot inhibit get</b>
+604795.121117807 s
+    </pre>
+    <p>Allows you to see more Raft log history with <code>logcabin-storage</code>.</p>
+
+    <p>Undo:</p>
+    <pre>
+<b>$ logcabinctl --server=$SERVER1IP snapshot inhibit clear</b>
+<b>$ logcabinctl --server=$SERVER1IP snapshot inhibit get</b>
+0 ns
+    </pre>
+  </section>
+
+  <section>
+    <h1>Changing Debug Log Verbosity</h1>
+    <p>Change the server's verbosity at runtime</p>
+    <pre>
+<b>$ logcabinctl --server=$SERVER1IP debug policy get</b>
+NOTICE
+<b>$ logcabinctl --server=$SERVER1IP debug policy set \</b>
+<b>  Server/RaftConsensus.cc@VERBOSE,Storage@WARNING,NOTICE</b>
+    </pre>
+    <pre class="small">
+<b>Server1$ tail server1.log</b>
+Server/RaftConsensus.cc:1393 in handleAppendEntries() VERBOSE: New commitIndex: 4997
+Server/RaftConsensus.cc:2804 in setElectionTimer() VERBOSE: Will become candidate in 581 ms
+...
+    </pre>
+
+    Clients have similar control with:
+    <pre>
+LogCabin::Client::Debug::setLogPolicy(
+  LogCabin::Client::Debug::logPolicyFromString(
+    "Client@VERBOSE,NOTICE"));
+    </pre>
+  </section>
+</section>
+
 <section data-markdown>
   <script type="text/template">
     # Development
