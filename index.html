@@ -40,6 +40,9 @@
   display: flex;
 }
 
+ul.small, span.small {
+  font-size: .8em;
+}
 pre.small{
   font-size: .4em;
 }
@@ -799,6 +802,116 @@ Operations:
   - No evidence of a problem with <code>ftruncate</code> at this point
 - Should not store all log entries in memory ([#106](https://github.com/logcabin/logcabin/issues/106))
   - Probably pretty easy with mmap
+    </script>
+  </section>
+
+</section>
+
+<section>
+  <section data-markdown>
+    <script type="text/template">
+# RPC system
+
+- Used for all communication (client-server and server-server)
+- For every request, servers either send a reply or close the connection
+- No ordering guarantees between RPCs
+- Protocol stack:
+  1. TCP/IP (non-blocking sockets)
+  2. Request-response framing protocol
+  3. RPC protocol
+  4. RPC-defined Protocol Buffers
+    </script>
+  </section>
+
+
+  <section data-markdown>
+    <script type="text/template">
+# Request-response framing protocol
+
+- Adapts from TCP's byte stream to message-oriented
+- Responses paired with requests by their message ID
+- TCP still somewhat useful (over UDP):
+   - Flow control, congestion control
+   - Retransmission and ordering within a connection
+- Messages transmitted in full
+  - Fixed size limit to each message (about 1MB) to limit head-of-line blocking
+- Special `PING` and `VERSION` messages
+- <span class="small">`RPC::MessageSocket::Header`</span>:
+  <ul class="small">
+    <li>magic: 0xdaf4 (2 bytes)</li>
+    <li>version: 1 (2 bytes)</li>
+    <li>payload length (4 bytes)</li>
+    <li>message ID (8 bytes)</li>
+  </ul>
+</div>
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# RPC protocol
+
+- Figure out where to route requests
+- Each service has a different thread pool
+- Service specific error intended things like `NOT_LEADER`
+- <span class="small">`RPC::Protocol::RequestHeaderVersion1`</span>:
+  <ul class="small">
+    <li>version: 1 (1 byte)</li>
+    <li>service: `CLIENT|RAFT|CONTROL` (2 bytes)</li>
+    <li>serviceSpecificErrorVersion (1 byte)</li>
+    <li>opCode (2 bytes)</li>
+  </ul>
+- <span class="small">`RPC::Protocol::ResponseHeaderVersion1`</span>:
+  <ul class="small">
+    <li>
+      status: `OK|SERVICE_SPECIFIC_ERROR|INVALID_VERSION|`
+              `INVALID_SERVICE|INVALID_REQUEST` (1 byte)
+    </li>
+  </ul>
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# RPC-defined Protocol Buffers
+
+- Serialization format: Google Protocol Buffers version 2 (stable)
+- Example from `Protocol/ServerControl.proto` (`logcabinctl debug filename set <path>`):
+
+```
+/**
+ * DebugFilenameSet RPC: Change the server's debug log filename.
+ */
+message DebugFilenameSet {
+    message Request {
+        optional string filename = 1;
+    }
+    message Response {
+        /**
+         * This field will be present if any error occurred and not present
+         * otherwise.
+         */
+        optional string error = 1;
+    }
+}
+```
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# RPC wishlist: gRPC
+
+protobuf3 and HTTP/2
+
+Pros:
+  - Easier to invoke from other languages
+  - Less code to maintain, less LogCabin-specific knowledge
+  - No need for message size limit (HTTP/2 can fragment each message)
+
+Cons:
+  - Still in alpha
+  - Hard to roll out while maintaining compatibility
     </script>
   </section>
 
