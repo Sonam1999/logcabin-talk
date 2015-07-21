@@ -753,28 +753,21 @@ Operations:
     </script>
   </section>
 
-  <section data-markdown>
-    <script type="text/template">
-# SegmentedStorage internals
-
-TODO: The contents of the next slide would be well-suited by a diagram.
-    </script>
-  </section>
-
-  <section data-markdown>
-    <script type="text/template">
-# SegmentedStorage internals
-- *Segment*: about 8MB file where consecutive log entries are written
-- About 3 *open segments* at any given time
-  - Pre-allocated by a background thread
-  - New log entries appended to *head segment*
-  - Other open segments are full of zeros
-  - Named *open-1*, *open-2*, ...
-- Any number of *closed segments*
-  - Named after log index range (*001-005*, *006-009*, ...)
-  - Immutable
-  - Any remaining zero bytes have been truncated
-    </script>
+  <section>
+    <h1>SegmentedStorage internals</h1>
+    <div class="flex">
+      <div style="min-width: 50%">
+        <img src="segmentedstorage.svg" />
+      </div>
+      <div>
+        <ul>
+          <li><em>Segment</em>: about 8MB file where consecutive log entries are written</li>
+          <li>About 3 <em>open segments</em> pre-allocated by background thread
+          <li>New log entries appended to <em>head segment</em></li>
+          <li><em>closed segments</em> are immutable</li>
+        </ul>
+      </div>
+    </div>
   </section>
 
   <section data-markdown>
