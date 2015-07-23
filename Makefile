@@ -21,6 +21,7 @@ $(DIR_IMAGES): auto/directories-%.svg: directories.dot
 	( \
 	  head -n -1 $<; \
 	  echo '$* [width=2, height=1.5, fillcolor="#2b83ba", fontcolor="white", fontname="Mono Bold", fontsize=26];'; \
+		echo 'ratio=1.0;'; \
 	  echo '}'; \
 	) \
 	| dot -Tsvg \

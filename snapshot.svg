@@ -10,10 +10,10 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="590.55664"
-   height="396.41992"
+   height="406.41992"
    id="svg5360"
    version="1.0"
-   inkscape:version="0.48.3.1 r9886"
+   inkscape:version="0.48.5 r10040"
    sodipodi:docname="snapshot.svg"
    sodipodi:version="0.32"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
@@ -25,13 +25,13 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="168.85896"
-     inkscape:cy="149.07276"
+     inkscape:cx="55.35896"
+     inkscape:cy="159.07278"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1598"
-     inkscape:window-height="862"
+     inkscape:window-width="980"
+     inkscape:window-height="1402"
      inkscape:window-x="0"
      inkscape:window-y="15"
      inkscape:window-maximized="0"
@@ -52,7 +52,7 @@
      inkscape:snap-nodes="true"
      inkscape:snap-page="false"
      inkscape:snap-to-guides="false"
-     fit-margin-top="0"
+     fit-margin-top="10"
      fit-margin-left="10"
      fit-margin-right="10"
      fit-margin-bottom="10">
@@ -65,8 +65,8 @@
        snapvisiblegridlinesonly="true"
        spacingx="10px"
        spacingy="10px"
-       originx="0.50000033px"
-       originy="-99.941391px" />
+       originx="0.50000066px"
+       originy="-99.941371px" />
   </sodipodi:namedview>
   <defs
      id="defs5362">
@@ -149,13 +149,13 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
      style="display:inline"
-     transform="translate(-39.020264,-193.93394)"
+     transform="translate(-39.020264,-183.93394)"
      id="layer1"
      inkscape:groupmode="layer"
      inkscape:label="rectangles">

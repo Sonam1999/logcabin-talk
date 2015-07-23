@@ -1,6 +1,6 @@
 digraph dependencies {
 
-ratio=.7;
+ratio=.5;
 fontname="Mono";
 
 // Directories

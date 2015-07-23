@@ -19,8 +19,12 @@
 
     <style>
 
+.reveal .slides {
+  text-align: left;
+}
+
 .reveal h1 {
-  font-size: 2.4em;
+  font-size: 2.0em;
 }
 
 .reveal h2 {
@@ -34,6 +38,26 @@
 .reveal h5,
 .reveal h6 {
   text-transform: none; /* was uppercase */
+  margin: 0 0 15px 0;
+  font-family: 'Lato', sans-serif;
+  text-align: center;
+}
+
+.center {
+  text-align: center;
+}
+
+.reveal .fill, .fill {
+  min-width: 100%;
+  min-height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.reveal img.center, img.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .flex {
@@ -76,7 +100,7 @@ pre.small{
 <section>
   <h1>LogCabin</h1>
   <h3>usage, operation, and internals</h3>
-  <p>
+  <p class="center">
     <small>
       Created by <a href="https://ongardie.net/diego/">Diego Ongaro</a> /
       <a href="https://twitter.com/ongardie">@ongardie</a>
@@ -152,7 +176,7 @@ An operation is <em>linearizable</em> it appears to occur instantaneously and
 exactly once at some point in time between its invocation and its response.
 </p>
 
-<img src="auto/linearizability-1.svg" class="stretch" />
+<img src="auto/linearizability-1.svg" class="center stretch" />
 
   </section>
 
@@ -164,7 +188,7 @@ An operation is <em>linearizable</em> it appears to occur instantaneously and
 exactly once at some point in time between its invocation and its response.
 </p>
 
-<img src="auto/linearizability-2.svg" class="stretch" />
+<img src="auto/linearizability-2.svg" class="center stretch" />
 
   </section>
 
@@ -222,7 +246,7 @@ latest commit index
 - Leader election (<a href="https://raftconsensus.github.io/raftscope/">RaftScope</a>)
 - Log replication
 
-<img src="pipeline.svg" />
+<img src="pipeline.svg" class="center stretch" />
 
     </script>
   </section>
@@ -259,7 +283,7 @@ How do clients find the leader?
 
 <section>
   <section>
-    <h1>Bootstrapping (1)</h1>
+    <h1>Bootstrapping first server</h1>
     <p>Bootstrap initializes the very first server's log with a configuration entry made up of just itself.</p>
     <pre>
 <b>Server1$ cat logcabin.conf</b>
@@ -284,7 +308,7 @@ Server/Main.cc:346 in main(): Done bootstrapping configuration. Exiting.
   </section>
 
   <section>
-    <h1>Bootstrapping (2)</h1>
+    <h1>Bootstrapping effects</h1>
     <p>The directory structure shows a single log segment with a single entry, and no snapshot.</p>
     <pre>
 <b>Server1$ tree -sh --du -F storage</b>
@@ -301,7 +325,7 @@ storage
   </section>
 
   <section>
-    <h1>Bootstrapping (3)</h1>
+    <h1>Bootstrapped log contents</h1>
     <p><code>logcabin-storage</code> dumps out the log.</p>
     <pre class="small">
 <b>Server1$ logcabin-storage --config=logcabin.conf</b>
@@ -338,7 +362,7 @@ Storage/Tool.cc:153 in readSnapshot(): Snapshot file not found in storage/server
 
 <section>
   <section>
-    <h1>Adding cluster members (1)</h1>
+    <h1>Adding servers: starting them</h1>
     <p>First, let's start up the servers.</p>
      <pre>
 <b>Server2$ cat logcabin.conf</b>
@@ -360,8 +384,8 @@ storagePath = storage
   </section>
 
   <section>
-    <h1>Adding cluster members (2)</h1>
-    <p>The first server gets to become leader of itself.</p>
+    <h1>Adding servers: first becomes leader</h1>
+    <p>The first server (bootstrapped) gets to become leader of itself.</p>
     <pre class="small">
 <b>$ logcabinctl --server=$SERVER1IP stats get</b>
 ...
@@ -395,7 +419,7 @@ raft {
   </section>
 
   <section>
-    <h1>Adding cluster members (3)</h1>
+    <h1>Adding servers: others idle</h1>
      <p>Other servers just sit idle, since they don't have a configuration.</p>
     <pre class="small">
 <b>$ logcabinctl --server=$SERVER2IP stats get</b>
@@ -429,7 +453,7 @@ raft {
   </section>
 
   <section>
-    <h1>Adding cluster members (4)</h1>
+    <h1>Adding servers: reconfigure</h1>
      <p>We can ask the leader to add the other two.</p>
     <pre>
 <b>$ export CLUSTER=$SERVER1IP,$SERVER2IP,$SERVER3IP</b>
@@ -454,7 +478,7 @@ Configuration 11:
   </section>
 
   <section>
-    <h1>Adding cluster members (5)</h1>
+    <h1>Adding servers: done</h1>
      <p>Now servers 2 and 3 are part of the cluster, have the latest configuration, and are proper followers.</p>
     <pre class="small">
 <b>$ logcabinctl --server=$SERVER2IP stats get</b>
@@ -495,7 +519,7 @@ raft {
 
 <section>
   <section>
-    <h1>Joint consensus (1)</h1>
+    <h1>Joint consensus: intro</h1>
     <p>LogCabin uses the <em>joint consensus</em> approach to Raft membership changes.</p>
     <ul>
       <li>Older form of membership changes, prior to single-server approach (see dissertation).</li>
@@ -505,8 +529,7 @@ raft {
   </section>
 
   <section>
-    <h1>Joint consensus (2)</h1>
-    Procedure:
+    <h1>Joint consensus: procedure</h1>
     <ol>
       <li>Leader catches up new servers with the latest snapshot and (most) log entries.</li>
       <li>Leader appends a transitional configuration entry to its log. Under this configuration, becoming leader and committing entries requires both:</li>
@@ -521,7 +544,7 @@ raft {
   </section>
 
   <section>
-    <h1>Joint consensus (3)</h1>
+    <h1>Joint consensus: debug log</h1>
     <p>Log from adding servers after bootstrapping</p>
     <pre class="small">
 <b>Server1$ cat server1.log</b>
@@ -554,8 +577,7 @@ prev_configuration {
   </section>
 
   <section>
-    <h1>Joint consensus (4)</h1>
-    <p>Arbitrary cluster changes</p>
+    <h1>Joint consensus: arbitrary cluster changes</h1>
     <pre class="small">
 <b>$ logcabin-reconfigure --cluster=$CLUSTER set $SERVER1IP</b>
 Current configuration:
@@ -704,7 +726,7 @@ LogCabin::Client::Debug::setLogPolicy(
 <section>
   <section>
     <h1>Code walkthrough</h1>
-    <img src="auto/directories.svg" class="stretch" />
+    <img src="auto/directories.svg" class="center stretch" />
   </section>
 
   <section data-transition="none">
@@ -945,11 +967,11 @@ LogCabin::Client::Debug::setLogPolicy(
   <section>
 <h1>Monitor testing example</h1>
 
-<div class="flex">
+<div class="flex stretch">
 
-  <div>
+  <div style="min-width: 45%; min-height: 100%; margin-right: 10px">
     Code
-    <pre><code class="cpp" data-trim>
+    <pre class="" style="margin: 0; padding: 0px; width: 100%"><code class="cpp fill" style="" data-trim>
 /// Return once the state machine has
 /// applied at least the given entry.
 void
@@ -962,9 +984,9 @@ StateMachine::wait(uint64_t index) const
     </code></pre>
   </div>
 
-  <div>
+  <div style="min-width: 45%; min-height: 100%; margin-left: 10px">
     Unit test
-    <pre><code class="cpp" data-trim>
+    <pre class="" style="margin: 0; padding: 0px; width: 100%"><code class="cpp fill" style="" data-trim>
 struct WaitHelper {
     explicit WaitHelper(StateMachine&amp; stateMachine)
         : stateMachine(stateMachine)
@@ -983,7 +1005,6 @@ struct WaitHelper {
     StateMachine&amp; stateMachine;
     uint64_t iter;
 };
-
 TEST_F(ServerStateMachineTest, wait)
 {
     WaitHelper helper(*stateMachine);
@@ -1050,8 +1071,8 @@ Operations:
   <section>
     <h1>SegmentedStorage internals</h1>
     <div class="flex">
-      <div style="min-width: 50%">
-        <img src="segmentedstorage.svg" />
+      <div style="min-width: 50%; margin-right: 1em">
+        <img src="segmentedstorage.svg" class="fill" />
       </div>
       <div>
         <ul>
@@ -1267,11 +1288,11 @@ Cons:
         // The "normal" size of the presentation, aspect ratio will be preserved
         // when the presentation is scaled to fit different resolutions. Can be
         // specified using percentage units.
-        width: 1024,
+        width: 1270,
         height: 768,
 
         // Factor of the display size that should remain empty around the content
-        margin: 0.03,
+        margin: 0.05,
 
         dependencies: [
           // Interpret Markdown in <section> elements
