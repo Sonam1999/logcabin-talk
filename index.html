@@ -231,9 +231,11 @@ Solution: client sessions
 
    <section data-markdown>
     <script type="text/template">
-# Read-only operations
+# Read-only queries
 
-We'd rather they didn't go through the log (for performance).
+In principle, could write these into the log.
+
+Instead, LogCabin treats them separately (for performance):
 
 - Need a round of heartbeats to confirm leader is current.
 
@@ -264,7 +266,7 @@ latest commit index
 
 How do clients find the cluster?
 - DNS or comma-separated list of hosts
-  - With membership changes, this list should be inclusive of any server that might be in the cluster
+- With membership changes, list should include any server that might be in the cluster
 
 How do clients find the leader?
 - No proxying in LogCabin
@@ -291,7 +293,8 @@ How do clients find the leader?
 <section>
   <section>
     <h1>Bootstrapping first server</h1>
-    <p>Bootstrap initializes the very first server's log with a configuration entry made up of just itself.</p>
+    <p>Very first server needs to be bootstrapped</p>
+    <p>Initializes the very first server's log with a configuration entry made up of just itself.</p>
     <pre>
 <b>Server1$ cat logcabin.conf</b>
 serverId = 1
@@ -529,9 +532,21 @@ raft {
     <h1>Joint consensus: intro</h1>
     <p>LogCabin uses the <em>joint consensus</em> approach to Raft membership changes.</p>
     <ul>
-      <li>Older form of membership changes, prior to single-server approach (see dissertation).</li>
-      <li>Allows transitioning from one cluster to another arbitrarily (no need for overlap).</li>
-      <li>Cluster remains available throughout.</li>
+      <li>Older form of membership changes, prior to single-server approach.</li>
+        <ul>
+          <li>Just for historical reasons</li>
+          <li>Somewhat more complex</li>
+          <li>More flexible</li>
+        </ul>
+      <li>Allows transitioning from one cluster to another arbitrarily.</li>
+        <ul>
+          <li>Can add/remove multiple servers at once</li>
+          <li>No need for any overlap</li>
+        </ul>
+      <li>Cluster remains available throughout the change</li>
+        <ul>
+          <li>Except if leader is not in new cluster, leader election gap</li>
+        </ul>
     </ul>
   </section>
 
@@ -701,20 +716,22 @@ Commands:
 NOTICE
 <b>$ logcabinctl --server=$SERVER1IP debug policy set \</b>
 <b>  Server/RaftConsensus.cc@VERBOSE,Storage@WARNING,NOTICE</b>
-    </pre>
-    <pre class="small">
+</pre>
+    <pre>
 <b>Server1$ tail server1.log</b>
 Server/RaftConsensus.cc:1393 in handleAppendEntries() VERBOSE: New commitIndex: 4997
 Server/RaftConsensus.cc:2804 in setElectionTimer() VERBOSE: Will become candidate in 581 ms
 ...
-    </pre>
+</pre>
 
-    Clients have similar control with:
-    <pre>
+    <p>Clients have similar control with:</p>
+    <pre><code class="cpp" data-trim>
 LogCabin::Client::Debug::setLogPolicy(
   LogCabin::Client::Debug::logPolicyFromString(
     "Client@VERBOSE,NOTICE"));
-    </pre>
+    </code></pre>
+
+    <p>Set server's default verbosity in config file</p>
   </section>
 </section>
 
@@ -743,14 +760,14 @@ LogCabin::Client::Debug::setLogPolicy(
       <div style="min-width: 50%; min-height: 100000px">
         <!-- giant min-height forces title to top of screen -->
         <ul>
-          <li>Randomness</li>
-          <li>Time</li>
+          <li>Random</li>
+          <li>Time (C++11) </li>
           <li>Mutex, condition variable</li>
           <li>STL and string utilities</li>
-          <li>Checksumming</li>
+          <li>Checksumming (Crypto++)</li>
           <li>Debug logging</li>
-          <li>Buffer</li>
           <li>Config file</li>
+          <li>Buffer (ptr, len)</li>
         </ul>
       </div>
     </div>
@@ -767,8 +784,8 @@ LogCabin::Client::Debug::setLogPolicy(
           <li>Singals</li>
           <li>Timers</li>
           <li>File descriptors</li>
-          <li>Event::Loop::Lock:
-            <ul style="font-size: .8em">
+          <li><code>Event::Loop::Lock</code>:
+            <ul>
               <li>block event loop thread in user-space outside of any handler</li>
               <li>used when removing monitored files</li>
             </ul>
@@ -788,8 +805,8 @@ LogCabin::Client::Debug::setLogPolicy(
           <li>Low-level framing protocol</li>
           <li>Application-level connection initiation timeout and heartbeats</li>
           <li>Higher-level RPC protocol</li>
-          <li>Address: DNS resolution</li>
-          <li>Service: RPC endpoint</li>
+          <li><code>Address</code>: DNS resolution</li>
+          <li><em>Service</em>: RPC endpoint</li>
           <li>Thread dispatch for most services</li>
         </ul>
       </div>
@@ -817,8 +834,12 @@ LogCabin::Client::Debug::setLogPolicy(
         <!-- giant min-height forces title to top of screen -->
         <ul>
           <li>Raft implementation</li>
-          <li>State machine (client sessions, forking)</li>
-          <li>Daemon startup (Globals)</li>
+          <li>State machine</li>
+            <ul>
+              <li>Client sessions</li>
+              <li>Forking</li>
+            </ul>
+          <li>Daemon startup (<code>Globals</code>)</li>
         </ul>
       </div>
     </div>
@@ -861,9 +882,9 @@ LogCabin::Client::Debug::setLogPolicy(
       <div style="min-width: 50%; min-height: 100000px">
         <!-- giant min-height forces title to top of screen -->
         <ul>
-          <li>Implementation of client library</li>
-          <li>LeaderRPC: connect to leader</li>
-          <li>MockClientImpl: in-memory Tree used for testing applications</li>
+          <li>Implementation of client library API</li>
+          <li><code>LeaderRPC</code>: connect to leader</li>
+          <li><code>MockClientImpl</code>: in-memory Tree used for testing applications</li>
         </ul>
       </div>
     </div>
@@ -893,13 +914,15 @@ LogCabin::Client::Debug::setLogPolicy(
     <script type="text/template">
 # Testing strategy: static
 - Pre-commit hooks:
-  - build with anal compiler settings
+  - Build with anal compiler settings
   - `cpplint.py` style checks
   - Doxygen warnings
+  - No coverage checks
 - `hookmatrix.sh` to compile/test on many compilers
   - g++ (v4.4 to v4.9, v5.1)
   - clang (v3.4 to v3.7 with libstdc++ 4.9 or libc++
 - Have run Coverity, Clang Static Analyzer in the past
+  - Manual
     </script>
   </section>
 
@@ -918,11 +941,11 @@ LogCabin::Client::Debug::setLogPolicy(
 </code></pre>
 
 - Pre-commit hooks run unit tests and basic smoke tests
-- Run some things through Valgrind before each release
 - Some system tests
  - `smoketest.py`: bring up cluster, run client
  - `failovertest.py`: similar but randomly kill servers
  - Should probably do more and also run these more
+- Run some things through Valgrind before each release
 - Scale regression tests
     </script>
   </section>
@@ -951,7 +974,7 @@ LogCabin::Client::Debug::setLogPolicy(
   <section data-markdown>
     <script type="text/template">
 # Monitor intro
-- *Monitor*: object that manages its own locking in a stylized way
+*Monitor*: object that manages its own locking in a stylized way:
 - One mutex per instance
 - Any number of condition variables
 - Every public method holds the mutex the entire time (except when waiting for a CV)
@@ -964,7 +987,7 @@ LogCabin::Client::Debug::setLogPolicy(
   <section data-markdown>
     <script type="text/template">
 # Monitors in LogCabin
-- Almost all locking based on this idea
+- Almost all locking in LogCabin based on this idea
   - No language support in C++
   - Slips a bit ([`Core::MutexUnlock`](https://github.com/logcabin/logcabin/blob/v1.0.0/Core/Mutex.h#L89))
 - Condition variable has support for unit testing
@@ -1032,13 +1055,14 @@ TEST_F(ServerStateMachineTest, wait)
   <script type="text/template">
 # Upgrades and compatibility
 
-- Semantic versioning, guarantees specified in `RELEASES.md`
+- [Semantic versioning](http://semver.org/), guarantees specified in
+  [RELEASES.md](https://github.com/logcabin/logcabin/blob/master/RELEASES.md)
 - Rolling upgrades supported
 - May run clients and servers with mixed versions
 - All disk formats and network protocols versioned internally
  - Ask for permission (e.g., request-response framing protocol)
  - Ask for forgiveness (e.g., new RPC opcode)
- - Backwards-compatibility (e.g., optional fields in ProtoBuf requests)
+ - Optional features (e.g., in ProtoBuf requests)
 - State machines must all change at same log position (to be deterministic)
  1. Leader writes log entry when *all* servers running new code
  2. State machine updates behavior upon seeing log entry
@@ -1088,9 +1112,18 @@ Operations:
           <li>New log entries appended to <em>head segment</em></li>
           <li><em>closed segments</em> are immutable</li>
         </ul>
+
+        <p>Operations:</p>
+        <ul>
+          <li>Read log entry</li>
+          <li>Append batch of log entries</li>
+          <li>Truncate suffix of log</li>
+          <li>Truncate prefix of log</li>
+        </ul>
       </div>
     </div>
   </section>
+
 
   <section data-markdown>
     <script type="text/template">
@@ -1116,11 +1149,11 @@ Operations:
     <script type="text/template">
 # SegmentedStorage wishlist
 
+- Should not store all log entries in memory ([#106](https://github.com/logcabin/logcabin/issues/106))
+  - Probably pretty easy with mmap
 - Truncate suffix could just append a special marker and not use <code>ftruncate</code>
   - Not a localized change
   - No evidence of a problem with <code>ftruncate</code> at this point
-- Should not store all log entries in memory ([#106](https://github.com/logcabin/logcabin/issues/106))
-  - Probably pretty easy with mmap
     </script>
   </section>
 
@@ -1174,10 +1207,7 @@ Operations:
 # Request-response framing protocol
 
 - Adapts from TCP's byte stream to message-oriented
-- Responses paired with requests by their message ID
-- TCP still somewhat useful (over UDP):
-   - Flow control, congestion control
-   - Retransmission and ordering within a connection
+- message ID to pair responses with requests
 - Messages transmitted in full
   - Fixed size limit to each message (about 1MB) to limit head-of-line blocking
 - Special `PING` and `VERSION` messages
@@ -1188,6 +1218,9 @@ Operations:
     <li>payload length (4 bytes)</li>
     <li>message ID (8 bytes)</li>
   </ul>
+- TCP still somewhat useful (over UDP):
+   - Flow control, congestion control
+   - Retransmission and ordering within a connection
 </div>
     </script>
   </section>
@@ -1221,7 +1254,8 @@ Operations:
 # RPC-defined Protocol Buffers
 
 - Serialization format: Google Protocol Buffers version 2 (stable)
-- Example from `Protocol/ServerControl.proto` (`logcabinctl debug filename set <path>`):
+- Example from `Protocol/ServerControl.proto`
+  - `logcabinctl debug filename set <path>`
 
 <pre><code class="protobuf">
 /**
@@ -1245,14 +1279,14 @@ message DebugFilenameSet {
 
   <section data-markdown>
     <script type="text/template">
-# RPC wishlist: gRPC
+# RPC wishlist: [gRPC](http://www.grpc.io)
 
 protobuf3 and HTTP/2
 
 Pros:
   - Easier to invoke from other languages
   - Less code to maintain, less LogCabin-specific knowledge
-  - No need for message size limit (HTTP/2 can fragment each message)
+  - No need for message size limit (HTTP/2 can fragment individual messages)
 
 Cons:
   - Still in alpha
