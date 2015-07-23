@@ -129,6 +129,17 @@ Options:
                                  (0 means wait forever) [default: 0s]
     </pre>
   </section>
+
+
+  <section data-markdown>
+    <script type="text/template">
+# Conditions
+- Check value of one key
+- Write/remove/whatever a possibly different key
+- Example: "If I own this lease, ..."
+- Files currently don't have version numbers: comparison based on full value
+    </script>
+  </section>
 </section>
 
 <section>
@@ -161,9 +172,9 @@ exactly once at some point in time between its invocation and its response.
 # Linearizability challenges
 
 All reads/writes go through the leader and the log has the linearized
-order, so this is easy, right?
+order, so this is easy, right? Wrong.
 
-Wrong: client retries and read-only operations.
+Client retries and read-only operations.
     </script>
   </section>
 
@@ -202,33 +213,44 @@ latest commit index
   </section>
 </section>
 
-<section data-markdown>
-  <script type="text/template">
-    # Internals
+<section>
+  <section data-markdown>
+    <script type="text/template">
+    # Internals: Raft
 
-    - Raft
-      - Leader election
-      - Log replication
-    - Client interaction
-      - Finding cluster
-      - Retries
-      - Read-only queries
-      - Read-write commands (and write pipeline)
-    - Disk
-      - Logs
-      - Snapshots
-    - RPC
+- Leader election (<a href="https://raftconsensus.github.io/raftscope/">RaftScope</a>)
+- Log replication
 
-  </script>
+<img src="pipeline.svg" />
+
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# Internals: Client interaction
+
+How do clients find the cluster?
+- DNS or comma-separated list of hosts
+  - With membership changes, this list should be inclusive of any server that might be in the cluster
+
+How do clients find the leader?
+- No proxying in LogCabin
+- Clients connect to a random server
+- If that server isn't leader, it says so
+  - May provide address of current leader
+- Clients then try again with another server
+- Any time connection is lost, try random server
+    </script>
+  </section>
 </section>
 
 <section data-markdown>
   <script type="text/template">
-    # Operation
+    # Operation overview
 
     - Bootstrapping
     - Changing membership
-    - Upgrades
     - logcabinctl
 
   </script>
@@ -676,6 +698,7 @@ LogCabin::Client::Debug::setLogPolicy(
     - ServerStats
     - Development procedure
     - Testing strategy/tools
+    - Upgrades and compatibility
 
   </script>
 </section>
@@ -906,6 +929,32 @@ Operations:
   </section>
 
 </section>
+
+<section>
+<h1>Snapshotting</h1>
+
+<div class="flex">
+  <div style="min-width: 50%">
+    <img src="snapshot.svg" />
+  </div>
+  <div>
+  <p><b>Challenge:</b> writing consistent snapshot while taking requests</p>
+  <ul>
+    <li>Writes out Raft header</li>
+    <li>
+      Forks child
+      <ul>
+        <li>Child writes Tree data</li>
+        <li>Child exits 0</li>
+      </ul>
+    </li>
+    <li>Parent closes/fsyncs file</li>
+    <li>Watchdog thread in parent in case child stalls</li>
+  </ul>
+</div>
+  </script>
+</section>
+
 
 <section>
   <section data-markdown>
