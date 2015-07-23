@@ -691,10 +691,11 @@ LogCabin::Client::Debug::setLogPolicy(
 
 <section data-markdown>
   <script type="text/template">
-    # Development
+    # Development overview
 
     - Code walkthrough
     - Testing strategy/tools
+    - Monitor-style classes
     - Upgrades and compatibility
 
   </script>
@@ -856,6 +857,7 @@ LogCabin::Client::Debug::setLogPolicy(
   </section>
 </section>
 
+
 <section>
 
   <section data-markdown>
@@ -911,6 +913,89 @@ LogCabin::Client::Debug::setLogPolicy(
 - Would like to be able to:
   - Run full hookmatrix (32 configurations) in CI style
   - Run benchmarks, `smoketest.py` and `failovertest.py` tests continuously
+    </script>
+  </section>
+</section>
+
+
+<section>
+  <section data-markdown>
+    <script type="text/template">
+# Monitor intro
+- *Monitor*: object that manages its own locking in a stylized way
+- One mutex per instance
+- Any number of condition variables
+- Every public method holds the mutex the entire time (except when waiting for a CV)
+- Dates back to
+  [Experience with Processes and Monitors in Mesa](http://research.microsoft.com/en-us/um/people/blampson/23-processesinmesa/abstract.html),
+  Butler W. Lampson and David D. Redell, 1980.
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# Monitors in LogCabin
+- Almost all locking based on this idea
+  - No language support in C++
+  - Slips a bit ([`Core::MutexUnlock`](https://github.com/logcabin/logcabin/blob/v1.0.0/Core/Mutex.h#L89))
+- Condition variable has support for unit testing
+    </script>
+  </section>
+
+  <section>
+<h1>Monitor testing example</h1>
+
+<div class="flex">
+
+  <div>
+    Code
+    <pre><code class="cpp" data-trim>
+/// Return once the state machine has
+/// applied at least the given entry.
+void
+StateMachine::wait(uint64_t index) const
+{
+    std::unique_lock&lt;Mutex&gt; lockGuard(mutex);
+    while (lastApplied < index)
+        entriesApplied.wait(lockGuard);
+}
+    </code></pre>
+  </div>
+
+  <div>
+    Unit test
+    <pre><code class="cpp" data-trim>
+struct WaitHelper {
+    explicit WaitHelper(StateMachine&amp; stateMachine)
+        : stateMachine(stateMachine)
+        , iter(0) {
+    }
+    void operator()() {
+        ++iter;
+        if (iter == 1) {
+            EXPECT_EQ(0U, stateMachine.lastApplied);
+            stateMachine.lastApplied = 2;
+        } else if (iter == 2) {
+            EXPECT_EQ(2U, stateMachine.lastApplied);
+            stateMachine.lastApplied = 3;
+        }
+    }
+    StateMachine&amp; stateMachine;
+    uint64_t iter;
+};
+
+TEST_F(ServerStateMachineTest, wait)
+{
+    WaitHelper helper(*stateMachine);
+    stateMachine-&gt;entriesApplied.callback =
+        std::ref(helper);
+    stateMachine-&gt;wait(3);
+    EXPECT_EQ(2U, helper.iter);
+}
+    </code></pre>
+  </div>
+</div>
+
     </script>
   </section>
 </section>
