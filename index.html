@@ -6,8 +6,8 @@
 
     <title>LogCabin - usage, operation, and internals</title>
 
-    <meta name="description" content="A framework for easily creating beautiful presentations using HTML">
-    <meta name="author" content="Hakim El Hattab">
+    <meta name="description" content="Usage, operations, and internals of LogCabin, a Raft-based storage system">
+    <meta name="author" content="Diego Ongaro">
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -95,6 +95,7 @@ pre.small{
     - conditions
     - timeouts
     - working directory
+    - testing callbacks
 
     </script>
   </section>
@@ -692,11 +693,7 @@ LogCabin::Client::Debug::setLogPolicy(
   <script type="text/template">
     # Development
 
-    - Code layout
-    - Examples of changes?
-    - Adding a command to logcabinctl?
-    - ServerStats
-    - Development procedure
+    - Code walkthrough
     - Testing strategy/tools
     - Upgrades and compatibility
 
@@ -857,6 +854,92 @@ LogCabin::Client::Debug::setLogPolicy(
       </div>
     </div>
   </section>
+</section>
+
+<section>
+
+  <section data-markdown>
+    <script type="text/template">
+# Testing strategy: static
+- Pre-commit hooks:
+  - build with anal compiler settings
+  - `cpplint.py` style checks
+  - Doxygen warnings
+- `hookmatrix.sh` to compile/test on many compilers
+  - g++ (v4.4 to v4.9, v5.1)
+  - clang (v3.4 to v3.7 with libstdc++ 4.9 or libc++
+- Have run Coverity, Clang Static Analyzer in the past
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# Testing strategy: dynamic
+
+- Lean heavily on unit tests (gtest)
+  - White-box, isomorphic to code (<a href="https://ramcloud.atlassian.net/wiki/display/RAM/Writing+Unit+Tests">RAMCloud style</a>)
+
+<pre><code class="nohighlight" data-trim>
+~/logcabin:master$ build/test/test
+[==========] Running 597 tests from 67 test cases.
+[==========] 597 tests from 67 test cases ran. (689 ms total)
+[  PASSED  ] 597 tests.
+</code></pre>
+
+- Pre-commit hooks run unit tests and basic smoke tests
+- Run some things through Valgrind before each release
+- Some system tests
+ - `smoketest.py`: bring up cluster, run client
+ - `failovertest.py`: similar but randomly kill servers
+ - Should probably do more and also run these more
+- Scale regression tests
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# Automated testing cluster
+
+- No such thing right now
+- <a href="https://travis-ci.org/logcabin/logcabin">Travis CI</a> runs some of
+  the pre-commit hooks
+  - Also keeps <a href="https://logcabin.github.io/doxygen/annotated.html">docs
+    on website</a> updated
+  - Pretty unreliable and slow
+  - Can't run distributed system
+  - Limited compiler options
+- Would like to be able to:
+  - Run full hookmatrix (32 configurations) in CI style
+  - Run benchmarks, `smoketest.py` and `failovertest.py` tests continuously
+    </script>
+  </section>
+</section>
+
+<section data-markdown>
+  <script type="text/template">
+# Upgrades and compatibility
+
+- Semantic versioning, guarantees specified in `RELEASES.md`
+- Rolling upgrades supported
+- May run clients and servers with mixed versions
+- All disk formats and network protocols versioned internally
+ - Ask for permission (e.g., request-response framing protocol)
+ - Ask for forgiveness (e.g., new RPC opcode)
+ - Backwards-compatibility (e.g., optional fields in ProtoBuf requests)
+- State machines must all change at same log position (to be deterministic)
+ 1. Leader writes log entry when *all* servers running new code
+ 2. State machine updates behavior upon seeing log entry
+  </script>
+</section>
+
+<section data-markdown>
+  <script type="text/template">
+# More internals
+
+- Segmented storage
+- Snapshotting
+- RPC system
+  </script>
 </section>
 
 <section>
@@ -1064,6 +1147,20 @@ Cons:
     </script>
   </section>
 
+</section>
+
+<section data-markdown>
+  <script type="text/template">
+# Other resources
+
+- [LogCabin code and README](https://github.com/logcabin/logcabin)
+- [LogCabin Doxygen docs](https://logcabin.github.io)
+- [Raft talks, publications](https://raftconsensus.github.io)
+- [raft-dev](https://groups.google.com/forum/#!forum/raft-dev)
+  (prefix subject with "[LogCabin]")
+- Nate/Phil have a bound copy of my PhD dissertation
+- Stickers
+  </script>
 </section>
 
 
