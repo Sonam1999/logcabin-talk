@@ -878,7 +878,7 @@ Operations:
 - Serialization format: Google Protocol Buffers version 2 (stable)
 - Example from `Protocol/ServerControl.proto` (`logcabinctl debug filename set <path>`):
 
-```
+<pre><code class="protobuf">
 /**
  * DebugFilenameSet RPC: Change the server's debug log filename.
  */
@@ -894,7 +894,7 @@ message DebugFilenameSet {
         optional string error = 1;
     }
 }
-```
+</code></pre>
     </script>
   </section>
 
@@ -946,6 +946,8 @@ Cons:
           // Interpret Markdown in <section> elements
           { src: 'reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
           { src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          // Syntax highlighting for <code> elements
+          { src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
         ],
       });
 
