@@ -84,22 +84,122 @@ pre.small{
   </p>
 </section>
 
-<section data-markdown>
-  <script type="text/template">
+<section>
+  <section data-markdown>
+    <script type="text/template">
     # Usage overview
 
     - hierarchical key-value store (tree)
-      - strongly typed
-    - linearizability
+      - <em>files</em> and <em>directories</em>, read/written in whole
+    - consistent: all operations are linearizable
     - conditions
     - timeouts
     - working directory
-    - logcabin CLI
-    - client library
-    - client sessions
-      - Implicit state machine command before any others
-      - Used to provide linearizability or crash
-  </script>
+
+    </script>
+  </section>
+
+  <section>
+    <h1>Command-line client</h1>
+    <pre>
+<b>$ logcabin -h</b>
+Run various operations on a LogCabin replicated state machine.
+
+Usage: logcabin [options] &lt;command&gt; [&lt;args&gt;]
+
+Commands:
+  mkdir &lt;path&gt;    If no directory exists at &lt;path&gt;, create it.
+  list &lt;path&gt;     List keys within directory at &lt;path&gt;.
+  dump [&lt;path&gt;]   Recursively print keys and values within directory at &lt;path&gt;.
+                  Defaults to printing all keys and values from root of tree.
+  rmdir &lt;path&gt;    Recursively remove directory at &lt;path&gt;, if any.
+  write &lt;path&gt;    Set/create value of file at &lt;path&gt; to stdin.
+  read &lt;path&gt;     Print value of file at &lt;path&gt;.
+  remove &lt;path&gt;   Remove file at &lt;path&gt;, if any.
+
+Options:
+  -c &lt;addresses&gt;, --cluster=&lt;addresses&gt;  Network addresses of the LogCabin
+                                         servers, comma-separated
+                                         [default: logcabin:5254]
+  -d &lt;path&gt;, --dir=&lt;path&gt;        Set working directory [default: /]
+  -p &lt;pred&gt;, --condition=&lt;pred&gt;  Set predicate on the operation of the
+                                 form &lt;path&gt;:&lt;value&gt;, indicating that the key
+                                 at &lt;path&gt; must have the given value.
+  -t &lt;time&gt;, --timeout=&lt;time&gt;    Set timeout for the operation
+                                 (0 means wait forever) [default: 0s]
+    </pre>
+  </section>
+</section>
+
+<section>
+  <section>
+    <h1>Linearizability (schedule A)</h1>
+
+<p>
+An operation is <em>linearizable</em> it appears to occur instantaneously and
+exactly once at some point in time between its invocation and its response.
+</p>
+
+<img src="auto/linearizability-1.svg" class="stretch" />
+
+  </section>
+
+  <section>
+    <h1>Linearizability (schedule B)</h1>
+
+<p>
+An operation is <em>linearizable</em> it appears to occur instantaneously and
+exactly once at some point in time between its invocation and its response.
+</p>
+
+<img src="auto/linearizability-2.svg" class="stretch" />
+
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# Linearizability challenges
+
+All reads/writes go through the leader and the log has the linearized
+order, so this is easy, right?
+
+Wrong: client retries and read-only operations.
+    </script>
+  </section>
+
+  <section data-markdown>
+    <script type="text/template">
+# Client retries
+
+Problem:
+ - Client doesn't receive ack, re-submits command.
+ - Linearizability requires that each command is executed exactly once.
+
+Solution: client sessions
+ - Client library opens a session (replicated) before issuing
+   any read-write requests
+   - <span class="small">Table of (sequence number, response) pairs.</span>
+ - If state machine sees command its already applied, replies with earlier
+   response.
+ - Client library heartbeats every minute. Servers expire sessions
+   after an hour. Client library aborts upon use of expired session.
+     </script>
+   </section>
+
+   <section data-markdown>
+    <script type="text/template">
+# Read-only operations
+
+We'd rather they didn't go through the log (for performance).
+
+- Need a round of heartbeats to confirm leader is current.
+
+- New leader in Raft doesn't know which of its entries
+have already been committed by prior leaders
+  - Wait until the leader has committed a new entry to be certain it has the
+latest commit index
+     </script>
+  </section>
 </section>
 
 <section data-markdown>
