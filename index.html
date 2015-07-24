@@ -179,7 +179,7 @@ Options:
     <h1>Linearizability (schedule A)</h1>
 
 <p>
-An operation is <em>linearizable</em> it appears to occur instantaneously and
+An operation is <em>linearizable</em> if it appears to occur instantaneously and
 exactly once at some point in time between its invocation and its response.
 </p>
 
@@ -191,7 +191,7 @@ exactly once at some point in time between its invocation and its response.
     <h1>Linearizability (schedule B)</h1>
 
 <p>
-An operation is <em>linearizable</em> it appears to occur instantaneously and
+An operation is <em>linearizable</em> if it appears to occur instantaneously and
 exactly once at some point in time between its invocation and its response.
 </p>
 
@@ -920,7 +920,7 @@ LogCabin::Client::Debug::setLogPolicy(
   - No coverage checks
 - `hookmatrix.sh` to compile/test on many compilers
   - g++ (v4.4 to v4.9, v5.1)
-  - clang (v3.4 to v3.7 with libstdc++ 4.9 or libc++
+  - clang (v3.4 to v3.7 with libstdc++ 4.9 or libc++)
 - Have run Coverity, Clang Static Analyzer in the past
   - Manual
     </script>
@@ -1341,6 +1341,8 @@ Cons:
           { src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
           // Syntax highlighting for <code> elements
           { src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          // Speaker notes (press 's')
+          { src: 'reveal.js/plugin/notes/notes.js', async: true }
         ],
       });
 
