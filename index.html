@@ -130,8 +130,8 @@ This work is licensed under the <a rel="license" href="http://creativecommons.or
 
     - hierarchical key-value store (tree)
       - <em>files</em> and <em>directories</em>, read/written in whole
-    - consistent: all operations are linearizable
-    - conditions
+    - consistent: all operations are [linearizable](#/linearizability)
+    - [conditions](#/conditions)
     - timeouts
     - working directory
     - testing callbacks
@@ -171,7 +171,7 @@ Options:
   </section>
 
 
-  <section data-markdown>
+  <section id="conditions" data-markdown>
     <script type="text/template">
 # Conditions
 - Check value of one key
@@ -183,7 +183,7 @@ Options:
 </section>
 
 <section>
-  <section>
+  <section id="linearizability">
     <h1>Linearizability (schedule A)</h1>
 
 <p>
@@ -274,7 +274,7 @@ latest commit index
 
 How do clients find the cluster?
 - DNS or comma-separated list of hosts
-- With membership changes, list should include any server that might be in the cluster
+- With [membership changes](#/jointconsensus), list should include any server that might be in the cluster
 
 How do clients find the leader?
 - No proxying in LogCabin
@@ -291,15 +291,15 @@ How do clients find the leader?
   <script type="text/template">
     # Operation overview
 
-    - Bootstrapping
-    - Changing membership
-    - logcabinctl
+    - [Bootstrapping](#/bootstrapping)
+    - [Changing membership](#/changingmembership)
+    - [logcabinctl](#/logcabinctl)
 
   </script>
 </section>
 
 <section>
-  <section>
+  <section id="bootstrapping">
     <h1>Bootstrapping first server</h1>
     <p>Very first server needs to be bootstrapped</p>
     <p>Initializes the very first server's log with a configuration entry made up of just itself.</p>
@@ -327,7 +327,8 @@ Server/Main.cc:346 in main(): Done bootstrapping configuration. Exiting.
 
   <section>
     <h1>Bootstrapping effects</h1>
-    <p>The directory structure shows a single log segment with a single entry, and no snapshot.</p>
+    <p>The directory structure shows a single <a href="#/segmentedstorage">log
+    segment</a> with a single entry, and no <a href="#/snapshotting">snapshot</a>.</p>
     <pre>
 <b>Server1$ tree -sh --du -F storage</b>
 storage
@@ -379,7 +380,7 @@ Storage/Tool.cc:153 in readSnapshot(): Snapshot file not found in storage/server
 </section>
 
 <section>
-  <section>
+  <section id="changingmembership">
     <h1>Adding servers: starting them</h1>
     <p>First, let's start up the servers.</p>
      <pre>
@@ -403,7 +404,7 @@ storagePath = storage
 
   <section>
     <h1>Adding servers: first becomes leader</h1>
-    <p>The first server (bootstrapped) gets to become leader of itself.</p>
+    <p>The first server (<a href="#/bootstrapping">bootstrapped</a>) gets to become leader of itself.</p>
     <pre class="small">
 <b>$ logcabinctl --server=$SERVER1IP stats get</b>
 ...
@@ -536,7 +537,7 @@ raft {
 </section>
 
 <section>
-  <section>
+  <section id="jointconsensus">
     <h1>Joint consensus: intro</h1>
     <p>LogCabin uses the <em>joint consensus</em> approach to Raft membership changes.</p>
     <ul>
@@ -647,7 +648,7 @@ Configuration 2378:
 </section>
 
 <section>
-  <section>
+  <section id="logcabinctl">
     <h1>logcabinctl</h1>
     <pre>
 <b>$ logcabinctl --help</b>
@@ -679,7 +680,7 @@ Commands:
   </section>
 
   <section>
-    <h1>Forcing a snapshot</h1>
+    <h1>Forcing a <a href="#/snapshotting">snapshot</a></h1>
     <pre>
 <b>$ logcabinctl --server=$SERVER1IP stats get | grep bytes</b>
   last_snapshot_bytes: 0
@@ -699,7 +700,7 @@ Commands:
   </section>
 
   <section>
-    <h1>Inhibiting snapshots</h1>
+    <h1>Inhibiting <a href="#/snapshotting">snapshots</a></h1>
     <p><code>scqad</code> (runs Scale's distributed tests) prevents automatic snapshots for one week after a test failure.</p>
     <pre>
 <b>$ logcabinctl --server=$SERVER1IP snapshot inhibit set 1week</b>
@@ -747,16 +748,16 @@ LogCabin::Client::Debug::setLogPolicy(
   <script type="text/template">
     # Development overview
 
-    - Code walkthrough
-    - Testing strategy/tools
-    - Monitor-style classes
-    - Upgrades and compatibility
+    - [Code walkthrough](#/codewalkthrough)
+    - [Testing strategy/tools](#/testing)
+    - [Monitor-style classes](#/monitors)
+    - [Upgrades and compatibility](#/upgrades)
 
   </script>
 </section>
 
 <section>
-  <section>
+  <section id="codewalkthrough">
     <h1>Code walkthrough</h1>
     <img src="auto/directories.svg" class="center stretch" />
   </section>
@@ -918,7 +919,7 @@ LogCabin::Client::Debug::setLogPolicy(
 
 <section>
 
-  <section data-markdown>
+  <section id="testing" data-markdown>
     <script type="text/template">
 # Testing strategy: static
 - Pre-commit hooks:
@@ -979,7 +980,7 @@ LogCabin::Client::Debug::setLogPolicy(
 
 
 <section>
-  <section data-markdown>
+  <section id="monitors" data-markdown>
     <script type="text/template">
 # Monitor intro
 *Monitor*: object that manages its own locking in a stylized way:
@@ -1059,7 +1060,7 @@ TEST_F(ServerStateMachineTest, wait)
   </section>
 </section>
 
-<section data-markdown>
+<section id="upgrades" data-markdown>
   <script type="text/template">
 # Upgrades and compatibility
 
@@ -1081,14 +1082,14 @@ TEST_F(ServerStateMachineTest, wait)
   <script type="text/template">
 # More internals
 
-- Segmented storage
-- Snapshotting
-- RPC system
+- [Segmented storage](#/segmentedstorage)
+- [Snapshotting](#/snapshotting)
+- [RPC system](#/rpc)
   </script>
 </section>
 
 <section>
-  <section data-markdown>
+  <section id="segmentedstorage" data-markdown>
     <script type="text/template">
 # SegmentedStorage
 
@@ -1167,7 +1168,7 @@ Operations:
 
 </section>
 
-<section>
+<section id="snapshotting">
 <h1>Snapshotting</h1>
 
 <div class="flex">
@@ -1194,7 +1195,7 @@ Operations:
 
 
 <section>
-  <section data-markdown>
+  <section id="rpc" data-markdown>
     <script type="text/template">
 # RPC system
 
