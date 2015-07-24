@@ -700,7 +700,7 @@ Commands:
 
   <section>
     <h1>Inhibiting snapshots</h1>
-    <p><code>scqad</code> prevents automatic snapshots for one week after a test failure.</p>
+    <p><code>scqad</code> (runs Scale's distributed tests) prevents automatic snapshots for one week after a test failure.</p>
     <pre>
 <b>$ logcabinctl --server=$SERVER1IP snapshot inhibit set 1week</b>
 <b>$ logcabinctl --server=$SERVER1IP snapshot inhibit get</b>
@@ -954,7 +954,7 @@ LogCabin::Client::Debug::setLogPolicy(
  - `failovertest.py`: similar but randomly kill servers
  - Should probably do more and also run these more
 - Run some things through Valgrind before each release
-- Scale regression tests
+- Scale's regression tests
     </script>
   </section>
 
@@ -1313,8 +1313,6 @@ Cons:
 - [Raft talks, publications](https://raftconsensus.github.io)
 - [raft-dev](https://groups.google.com/forum/#!forum/raft-dev)
   (prefix subject with "[LogCabin]")
-- Nate/Phil have a bound copy of my PhD dissertation
-- Stickers
   </script>
 </section>
 
