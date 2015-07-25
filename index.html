@@ -109,6 +109,13 @@ pre.small{
   Computing's Engineering Week in July 2015. Though its organization is
   poor, it contains some good content, some of which cannot be found
   elsewhere.
+  <br />
+  There's sort of two axes to this talk: (1) usage, operations,
+  internals, and (2) aspect of LogCabin such as writes, reads, membership
+  changes, compaction.
+  Right now it's all mushed together. On the next revision,
+  it'd be better to do a conceptual overview, then organize by (2),
+  interspersing the (1)s.
   </p>
 
 
@@ -687,6 +694,18 @@ Configuration 2378:
     </pre>
   </section>
 
+</section>
+
+<section>
+  <h1>Intro snapshotting</h1>
+
+  <p>Snapshotting is discussed <a href="#/snapshotting">later</a>,
+  but you'll probably need some concept of it to understand half of
+  logcabinctl.</p>
+
+  <p>Goal: reclaim log space</p>
+
+  <img src="snapshot.svg" class="stretch center" />
 </section>
 
 <section>
