@@ -224,6 +224,10 @@ All reads/writes go through the leader and the log has the linearized
 order, so this is easy, right? Wrong.
 
 Client retries and read-only operations.
+
+*Warning:*
+The next couple of slides won't make sense unless you're already familiar with
+Raft and LogCabin. Consider revisiting these later.
     </script>
   </section>
 
@@ -269,6 +273,25 @@ More details in Client Interaction chapter of Raft dissertation.
 </section>
 
 <section>
+  <section>
+    <h1>Replicated state machines</h1>
+
+<p>LogCabin is one of these.</p>
+
+<img src="rsm.svg" class="center" />
+
+<ul>
+<li><em>Replicated log</em> &rArr; replicated state machine</ul>
+  <ul>
+    <li>All servers execute same commands in same order</li>
+  </ul>
+<li>Consensus module ensures proper log replication</li>
+<li>System makes progress as long as any majority of servers up</li>
+<li>Failure model: fail-stop (not Byzantine), delayed/lost msgs</li>
+</ul>
+
+  </section>
+
   <section data-markdown>
     <script type="text/template">
     # Internals: Raft
