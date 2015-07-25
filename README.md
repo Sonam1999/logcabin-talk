@@ -4,6 +4,7 @@ some good content, some of which cannot be found elsewhere.
 
 
 To "build" this:
+
     git submodule update --init --recursive
     make
 
