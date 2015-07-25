@@ -205,6 +205,15 @@ exactly once at some point in time between its invocation and its response.
 
 <img src="auto/linearizability-2.svg" class="center stretch" />
 
+<p>
+<span class="small">
+For more detail, see
+<a href="https://scholar.google.com/scholar?cluster=7860241540823320465&hl=en&as_sdt=1,29">Linearizability: A correctness condition for concurrent objects</a>,
+Maurice P. Herlihy and Jeannette M. Wing, 1990; and
+<a href="http://www.bailis.org/blog/linearizability-versus-serializability/">Linearizability versus Serializability</a>,
+a blog post by Peter Bailis, 2014.
+</span>
+</p>
   </section>
 
   <section data-markdown>
@@ -234,6 +243,8 @@ Solution: client sessions
    response.
  - Client library heartbeats every minute. Servers expire sessions
    after an hour. Client library aborts upon use of expired session.
+
+More details in Client Interaction chapter of Raft dissertation.
      </script>
    </section>
 
@@ -251,6 +262,8 @@ Instead, LogCabin treats them separately (for performance):
 have already been committed by prior leaders
   - Wait until the leader has committed a new entry to be certain it has the
 latest commit index
+
+More details in Client Interaction chapter of Raft dissertation.
      </script>
   </section>
 </section>
@@ -265,6 +278,7 @@ latest commit index
 
 <img src="pipeline.svg" class="center stretch" />
 
+More details in Raft dissertation. Performance chapter discusses write optimization.
     </script>
   </section>
 
@@ -283,6 +297,8 @@ How do clients find the leader?
   - May provide address of current leader
 - Clients then try again with another server
 - Any time connection is lost, try random server
+
+More details in Client Interaction chapter of Raft dissertation.
     </script>
   </section>
 </section>
@@ -557,6 +573,7 @@ raft {
           <li>Except if leader is not in new cluster, leader election gap</li>
         </ul>
     </ul>
+    <p>More details in Membership Changes chapter of Raft dissertation.</p>
   </section>
 
   <section>
@@ -572,6 +589,8 @@ raft {
       <li>Leader commits transitional configuration entry.</li>
       <li>Leader appends new configuration entry to its log.</li>
       <li>Leader commits new configuration entry.</li>
+    </ol>
+    <p>More details in Membership Changes chapter of Raft dissertation.</p>
   </section>
 
   <section>
@@ -1176,21 +1195,22 @@ Operations:
     <img src="snapshot.svg" />
   </div>
   <div>
-  <p><b>Challenge:</b> writing consistent snapshot while taking requests</p>
-  <ul>
-    <li>Writes out Raft header</li>
-    <li>
-      Forks child
-      <ul>
-        <li>Child writes Tree data</li>
-        <li>Child exits 0</li>
-      </ul>
-    </li>
-    <li>Parent closes/fsyncs file</li>
-    <li>Watchdog thread in parent in case child stalls</li>
-  </ul>
+    <p><b>Challenge:</b> writing consistent snapshot while taking requests</p>
+    <ul>
+      <li>Writes out Raft header</li>
+      <li>
+        Forks child
+        <ul>
+          <li>Child writes Tree data</li>
+          <li>Child exits 0</li>
+        </ul>
+      </li>
+      <li>Parent closes/fsyncs file</li>
+      <li>Watchdog thread in parent in case child stalls</li>
+    </ul>
+  </div>
 </div>
-  </script>
+<p>More details in Log Compaction chapter of Raft dissertation.</p>
 </section>
 
 
@@ -1311,7 +1331,7 @@ Cons:
 
 - [LogCabin code and README](https://github.com/logcabin/logcabin)
 - [LogCabin Doxygen docs](https://logcabin.github.io)
-- [Raft talks, publications](https://raftconsensus.github.io)
+- [Raft talks, publications](https://raftconsensus.github.io) (including paper, Diego's PhD dissertation)
 - [raft-dev](https://groups.google.com/forum/#!forum/raft-dev)
   (prefix subject with "[LogCabin]")
   </script>
